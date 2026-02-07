@@ -1,0 +1,29 @@
+{
+    "name": "ancalagon/netbox",
+    "description": "High Level Netbox API interface to handle objects like virtual machine, ip addresses, ...",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Ancalagon\\Netbox\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Bruno Mairlot",
+            "email": "bruno@ancalagon.be"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.4",
+        "ext-json": "*",
+        "ext-curl": "*",
+        "mkevenaar/netbox": "^3.0"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "apcu-autoloader": true,
+        "sort-packages": true
+    }
+}
