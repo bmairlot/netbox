@@ -66,28 +66,28 @@ class NetworkInterface
     // CRUD
     /**
      * Create (POST)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function add(): void
     {
         if (empty($this->getDevice())) {
-            throw new CloudGenException("Missing device (DCIM Interface requires parent device)");
+            throw new Exception("Missing device (DCIM Interface requires parent device)");
         }
         if (empty($this->getName())) {
-            throw new CloudGenException("Missing name for NetworkInterface");
+            throw new Exception("Missing name for NetworkInterface");
         }
 
         try {
             $res = self::$client->getHttpClient()->post("/dcim/interfaces/", $this->getAddParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't create the DCIM Interface: {$e->getMessage()}");
+            throw new Exception("Couldn't create the DCIM Interface: {$e->getMessage()}");
         }
     }
 
     /**
      * Read single (by id or by device + name)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function load(): void
     {
@@ -107,18 +107,18 @@ class NetworkInterface
                 ]);
 
                 if (($res['count'] ?? 0) === 0) {
-                    throw new CloudGenException("NetworkInterface not found for device='{$this->getDevice()}', name='{$this->getName()}'");
+                    throw new Exception("NetworkInterface not found for device='{$this->getDevice()}', name='{$this->getName()}'");
                 }
                 if (($res['count'] ?? 0) > 1) {
-                    throw new CloudGenException("Multiple NetworkInterface entries found for device='{$this->getDevice()}', name='{$this->getName()}'");
+                    throw new Exception("Multiple NetworkInterface entries found for device='{$this->getDevice()}', name='{$this->getName()}'");
                 }
                 $this->loadFromApiResult($res['results'][0]);
                 return;
             }
 
-            throw new CloudGenException("Can't load NetworkInterface without 'id' or ('device' and 'name')");
+            throw new Exception("Can't load NetworkInterface without 'id' or ('device' and 'name')");
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't load the DCIM Interface: {$e->getMessage()}");
+            throw new Exception("Couldn't load the DCIM Interface: {$e->getMessage()}");
         }
     }
 
@@ -126,65 +126,65 @@ class NetworkInterface
      * List with optional filters
      * @param array $filters
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function list(array $filters = []): array
     {
         try {
             return self::$client->getHttpClient()->get("/dcim/interfaces/", $filters);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't list DCIM Interfaces: {$e->getMessage()}");
+            throw new Exception("Couldn't list DCIM Interfaces: {$e->getMessage()}");
         }
     }
 
     /**
      * Replace (PUT)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function edit(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't edit NetworkInterface without 'id'");
+            throw new Exception("Can't edit NetworkInterface without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->put("/dcim/interfaces/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't edit the DCIM Interface: {$e->getMessage()}");
+            throw new Exception("Couldn't edit the DCIM Interface: {$e->getMessage()}");
         }
     }
 
     /**
      * Partial update (PATCH)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function update(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't update NetworkInterface without 'id'");
+            throw new Exception("Can't update NetworkInterface without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->patch("/dcim/interfaces/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't update the DCIM Interface: {$e->getMessage()}");
+            throw new Exception("Couldn't update the DCIM Interface: {$e->getMessage()}");
         }
     }
 
     /**
      * Delete (DELETE)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function delete(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't delete NetworkInterface without 'id'");
+            throw new Exception("Can't delete NetworkInterface without 'id'");
         }
         try {
             self::$client->getHttpClient()->delete("/dcim/interfaces/" . $this->getId() . "/", []);
             $this->setId(null);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't delete the DCIM Interface: {$e->getMessage()}");
+            throw new Exception("Couldn't delete the DCIM Interface: {$e->getMessage()}");
         }
     }
 
@@ -193,7 +193,7 @@ class NetworkInterface
      * List all interfaces for a Device
      * @param string $deviceId
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function listByDevice(string $deviceId): array
     {
@@ -205,7 +205,7 @@ class NetworkInterface
     /**
      * Assign or update primary MAC by MacAddress id
      * @param string $macId
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function setPrimaryMacById(string $macId): void
     {
@@ -216,7 +216,7 @@ class NetworkInterface
     /**
      * Assign untagged VLAN by id and patch
      * @param string $vlanId
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function assignUntaggedVlan(string $vlanId): void
     {
@@ -227,7 +227,7 @@ class NetworkInterface
     /**
      * Replace tagged VLANs set and patch
      * @param array $vlanIds
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function updateTaggedVlans(array $vlanIds): void
     {
@@ -238,7 +238,7 @@ class NetworkInterface
     /**
      * Add a single tagged VLAN id and patch
      * @param string $vlanId
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function addTaggedVlan(string $vlanId): void
     {
@@ -250,7 +250,7 @@ class NetworkInterface
     /**
      * Remove a single tagged VLAN id and patch
      * @param string $vlanId
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function removeTaggedVlan(string $vlanId): void
     {

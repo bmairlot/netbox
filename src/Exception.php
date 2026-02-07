@@ -1,7 +1,7 @@
 <?php
 namespace Ancalagon\Netbox;
 
-class CloudGenException extends \Exception
+class Exception extends \Exception
 {
     // You can add custom methods or properties here if needed
 

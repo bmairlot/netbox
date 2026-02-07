@@ -33,7 +33,7 @@ class MacAddress
 
     /**
      * Create (POST)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function add(): void
     {
@@ -41,13 +41,13 @@ class MacAddress
             $res = self::$client->getHttpClient()->post("/dcim/mac-addresses/", $this->getAddParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't create the Mac Address: {$e->getMessage()}");
+            throw new Exception("Couldn't create the Mac Address: {$e->getMessage()}");
         }
     }
 
     /**
      * Read single (by id or mac_address)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function load(): void
     {
@@ -64,18 +64,18 @@ class MacAddress
                 ]);
 
                 if (($res['count'] ?? 0) === 0) {
-                    throw new CloudGenException("MacAddress not found for mac_address='{$this->getMacAddress()}'");
+                    throw new Exception("MacAddress not found for mac_address='{$this->getMacAddress()}'");
                 }
                 if (($res['count'] ?? 0) > 1) {
-                    throw new CloudGenException("Multiple MacAddress entries found for mac_address='{$this->getMacAddress()}'");
+                    throw new Exception("Multiple MacAddress entries found for mac_address='{$this->getMacAddress()}'");
                 }
                 $this->loadFromApiResult($res['results'][0]);
                 return;
             }
 
-            throw new CloudGenException("Can't load MacAddress without 'id' or 'mac_address'");
+            throw new Exception("Can't load MacAddress without 'id' or 'mac_address'");
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't load the Mac Address: {$e->getMessage()}");
+            throw new Exception("Couldn't load the Mac Address: {$e->getMessage()}");
         }
     }
 
@@ -83,65 +83,65 @@ class MacAddress
      * List with optional filters
      * @param array $filters
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function list(array $filters = []): array
     {
         try {
             return self::$client->getHttpClient()->get("/dcim/mac-addresses/", $filters);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't list Mac Addresses: {$e->getMessage()}");
+            throw new Exception("Couldn't list Mac Addresses: {$e->getMessage()}");
         }
     }
 
     /**
      * Replace (PUT)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function edit(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't edit MacAddress without 'id'");
+            throw new Exception("Can't edit MacAddress without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->put("/dcim/mac-addresses/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't edit the Mac Address: {$e->getMessage()}");
+            throw new Exception("Couldn't edit the Mac Address: {$e->getMessage()}");
         }
     }
 
     /**
      * Partial update (PATCH)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function update(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't update MacAddress without 'id'");
+            throw new Exception("Can't update MacAddress without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->patch("/dcim/mac-addresses/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't update the Mac Address: {$e->getMessage()}");
+            throw new Exception("Couldn't update the Mac Address: {$e->getMessage()}");
         }
     }
 
     /**
      * Delete (DELETE)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function delete(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't delete MacAddress without 'id'");
+            throw new Exception("Can't delete MacAddress without 'id'");
         }
         try {
             self::$client->getHttpClient()->delete("/dcim/mac-addresses/" . $this->getId() . "/", []);
             $this->setId(null);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't delete the Mac Address: {$e->getMessage()}");
+            throw new Exception("Couldn't delete the Mac Address: {$e->getMessage()}");
         }
     }
 

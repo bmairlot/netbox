@@ -51,7 +51,7 @@ class VirtualMachine
 
     /**
      * Create (POST)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function add(): void
     {
@@ -59,13 +59,13 @@ class VirtualMachine
             $res = self::$api->add($this->getAddParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't create the Virtual Machine: {$e->getMessage()}");
+            throw new Exception("Couldn't create the Virtual Machine: {$e->getMessage()}");
         }
     }
 
     /**
      * Read single (by id or by name)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function load(): void
     {
@@ -82,18 +82,18 @@ class VirtualMachine
                 ]);
 
                 if (($res['count'] ?? 0) === 0) {
-                    throw new CloudGenException("VirtualMachine not found for name='{$this->getName()}'");
+                    throw new Exception("VirtualMachine not found for name='{$this->getName()}'");
                 }
                 if (($res['count'] ?? 0) > 1) {
-                    throw new CloudGenException("Multiple VirtualMachine entries found for name='{$this->getName()}'");
+                    throw new Exception("Multiple VirtualMachine entries found for name='{$this->getName()}'");
                 }
                 $this->loadFromApiResult($res['results'][0]);
                 return;
             }
 
-            throw new CloudGenException("Can't load VirtualMachine without 'id' or 'name'");
+            throw new Exception("Can't load VirtualMachine without 'id' or 'name'");
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't load the Virtual Machine: {$e->getMessage()}");
+            throw new Exception("Couldn't load the Virtual Machine: {$e->getMessage()}");
         }
     }
 
@@ -101,65 +101,65 @@ class VirtualMachine
      * List with optional filters
      * @param array $filters
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function list(array $filters = []): array
     {
         try {
             return self::$client->getHttpClient()->get("/virtualization/virtual-machines/", $filters);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't list Virtual Machines: {$e->getMessage()}");
+            throw new Exception("Couldn't list Virtual Machines: {$e->getMessage()}");
         }
     }
 
     /**
      * Replace (PUT)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function edit(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't edit VirtualMachine without 'id'");
+            throw new Exception("Can't edit VirtualMachine without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->put("/virtualization/virtual-machines/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't edit the Virtual Machine: {$e->getMessage()}");
+            throw new Exception("Couldn't edit the Virtual Machine: {$e->getMessage()}");
         }
     }
 
     /**
      * Partial Update (PATCH)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function update(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't update VirtualMachine without 'id'");
+            throw new Exception("Can't update VirtualMachine without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->patch("/virtualization/virtual-machines/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't update the Virtual Machine: {$e->getMessage()}");
+            throw new Exception("Couldn't update the Virtual Machine: {$e->getMessage()}");
         }
     }
 
     /**
      * Delete (DELETE)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function delete(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't delete VirtualMachine without 'id'");
+            throw new Exception("Can't delete VirtualMachine without 'id'");
         }
         try {
             self::$client->getHttpClient()->delete("/virtualization/virtual-machines/" . $this->getId() . "/", []);
             $this->setId(null);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't delete the Virtual Machine: {$e->getMessage()}");
+            throw new Exception("Couldn't delete the Virtual Machine: {$e->getMessage()}");
         }
     }
 

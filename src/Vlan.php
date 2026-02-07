@@ -2,7 +2,6 @@
 
 namespace Ancalagon\Netbox;
 
-use Ancalagon\Netbox\CloudGenException;
 use GuzzleHttp\Exception\GuzzleException;
 use mkevenaar\NetBox\Api\IPAM\Vlans;
 
@@ -24,7 +23,7 @@ class Vlan
     }
 
     /**
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function load(): void
     {
@@ -41,14 +40,14 @@ class Vlan
 
         if(empty($paramArr)) {
             // We need to search on something
-            throw new CloudGenException("Can't load with neither id, vID or name");
+            throw new Exception("Can't load with neither id, vID or name");
         }
         else{
             try {
                 $res = self::$api->list($paramArr);
                 if($res['count']==0){
 
-                    throw new CloudGenException("VLAN not found".var_export($paramArr,true));
+                    throw new Exception("VLAN not found".var_export($paramArr,true));
                 }
                 if($res['count']==1){
                     $this->setId($res['results'][0]['id']);
@@ -60,16 +59,16 @@ class Vlan
                 }
                 else{
                     print_r($res);
-                    throw new CloudGenException("Multiple VLAN returned by query with ".var_export($paramArr,true));
+                    throw new Exception("Multiple VLAN returned by query with ".var_export($paramArr,true));
                 }
             } catch (GuzzleException $e) {
-                throw new CloudGenException("Couldn't load the VLAN : {$e->getMessage()}");
+                throw new Exception("Couldn't load the VLAN : {$e->getMessage()}");
             }
         }
     }
 
     /**
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function add(): void
     {
@@ -77,7 +76,7 @@ class Vlan
             $res = self::$api->add($this->getAddParamArr());
             $this->setId($res["id"]);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't create the Vlan : {$e->getMessage()}");
+            throw new Exception("Couldn't create the Vlan : {$e->getMessage()}");
         }
     }
 

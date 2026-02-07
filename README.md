@@ -208,16 +208,16 @@ $results = $owner->listByGroup($group->getId());
 
 ## Error Handling
 
-All API errors are wrapped in `CloudGenException`:
+All API errors are wrapped in `Exception`:
 
 ```php
-use Ancalagon\Netbox\CloudGenException;
+use Ancalagon\Netbox\Exception;
 
 try {
     $vm = new VirtualMachine();
     $vm->setName('test-vm');
     $vm->load();
-} catch (CloudGenException $e) {
+} catch (Exception $e) {
     echo $e->getMessage();
 }
 ```

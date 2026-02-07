@@ -2,7 +2,6 @@
 
 namespace Ancalagon\Netbox;
 
-use Ancalagon\Netbox\CloudGenException;
 use GuzzleHttp\Exception\GuzzleException;
 use mkevenaar\NetBox\Api\IPAM\Prefixes;
 
@@ -33,7 +32,7 @@ class Prefix
     }
 
     /**
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function load(): void
     {
@@ -47,23 +46,23 @@ class Prefix
 
         if (empty($paramArr)) {
             // We need to search on something
-            throw new CloudGenException("Can't load with neither id or prefix");
+            throw new Exception("Can't load with neither id or prefix");
         } else {
             try {
                 $res = self::$api->list($paramArr);
                 if ($res['count'] == 1) {
                     $this->loadFromApiResult($res['results'][0]);
                 } else {
-                    throw new CloudGenException("Multiple Prefixes returned by query with " . var_export($paramArr, true));
+                    throw new Exception("Multiple Prefixes returned by query with " . var_export($paramArr, true));
                 }
             } catch (GuzzleException $e) {
-                throw new CloudGenException("Couldn't load the Prefix: {$e->getMessage()}");
+                throw new Exception("Couldn't load the Prefix: {$e->getMessage()}");
             }
         }
     }
 
     /**
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function add(): void
     {
@@ -71,7 +70,7 @@ class Prefix
             $res = self::$api->add($this->getAddParamArr());
             $this->setId($res["id"]);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't create the Prefix: {$e->getMessage()}");
+            throw new Exception("Couldn't create the Prefix: {$e->getMessage()}");
         }
     }
 

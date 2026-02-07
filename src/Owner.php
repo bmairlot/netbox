@@ -32,25 +32,25 @@ class Owner
 
     /**
      * Create (POST)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function add(): void
     {
         if (empty($this->getName())) {
-            throw new CloudGenException("Missing name for Owner");
+            throw new Exception("Missing name for Owner");
         }
 
         try {
             $res = self::$client->getHttpClient()->post("/tenancy/owners/", $this->getAddParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't create the Owner: {$e->getMessage()}");
+            throw new Exception("Couldn't create the Owner: {$e->getMessage()}");
         }
     }
 
     /**
      * Read single (by id or by name)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function load(): void
     {
@@ -67,18 +67,18 @@ class Owner
                 ]);
 
                 if (($res['count'] ?? 0) === 0) {
-                    throw new CloudGenException("Owner not found for name='{$this->getName()}'");
+                    throw new Exception("Owner not found for name='{$this->getName()}'");
                 }
                 if (($res['count'] ?? 0) > 1) {
-                    throw new CloudGenException("Multiple Owner entries found for name='{$this->getName()}'");
+                    throw new Exception("Multiple Owner entries found for name='{$this->getName()}'");
                 }
                 $this->loadFromApiResult($res['results'][0]);
                 return;
             }
 
-            throw new CloudGenException("Can't load Owner without 'id' or 'name'");
+            throw new Exception("Can't load Owner without 'id' or 'name'");
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't load the Owner: {$e->getMessage()}");
+            throw new Exception("Couldn't load the Owner: {$e->getMessage()}");
         }
     }
 
@@ -86,65 +86,65 @@ class Owner
      * List with optional filters
      * @param array $filters
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function list(array $filters = []): array
     {
         try {
             return self::$client->getHttpClient()->get("/tenancy/owners/", $filters);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't list Owners: {$e->getMessage()}");
+            throw new Exception("Couldn't list Owners: {$e->getMessage()}");
         }
     }
 
     /**
      * Replace (PUT)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function edit(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't edit Owner without 'id'");
+            throw new Exception("Can't edit Owner without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->put("/tenancy/owners/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't edit the Owner: {$e->getMessage()}");
+            throw new Exception("Couldn't edit the Owner: {$e->getMessage()}");
         }
     }
 
     /**
      * Partial Update (PATCH)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function update(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't update Owner without 'id'");
+            throw new Exception("Can't update Owner without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->patch("/tenancy/owners/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't update the Owner: {$e->getMessage()}");
+            throw new Exception("Couldn't update the Owner: {$e->getMessage()}");
         }
     }
 
     /**
      * Delete (DELETE)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function delete(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't delete Owner without 'id'");
+            throw new Exception("Can't delete Owner without 'id'");
         }
         try {
             self::$client->getHttpClient()->delete("/tenancy/owners/" . $this->getId() . "/", []);
             $this->setId(null);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't delete the Owner: {$e->getMessage()}");
+            throw new Exception("Couldn't delete the Owner: {$e->getMessage()}");
         }
     }
 
@@ -154,7 +154,7 @@ class Owner
      * List all owners in a specific group
      * @param string $groupId
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function listByGroup(string $groupId): array
     {

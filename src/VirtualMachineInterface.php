@@ -42,28 +42,28 @@ class VirtualMachineInterface
 
     /**
      * Create (POST)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function add(): void
     {
         if (empty($this->getVirtualMachine())) {
-            throw new CloudGenException("Missing Virtual Machine (interface requires parent VM)");
+            throw new Exception("Missing Virtual Machine (interface requires parent VM)");
         }
         if (empty($this->getName())) {
-            throw new CloudGenException("Missing name for VirtualMachineInterface");
+            throw new Exception("Missing name for VirtualMachineInterface");
         }
 
         try {
             $res = self::$client->getHttpClient()->post("/virtualization/interfaces/", $this->getAddParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't create the Virtual Machine Interface: {$e->getMessage()}");
+            throw new Exception("Couldn't create the Virtual Machine Interface: {$e->getMessage()}");
         }
     }
 
     /**
      * Read single (by id or by VM + name)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function load(): void
     {
@@ -83,18 +83,18 @@ class VirtualMachineInterface
                 ]);
 
                 if (($res['count'] ?? 0) === 0) {
-                    throw new CloudGenException("VirtualMachineInterface not found for vm='{$this->getVirtualMachine()}', name='{$this->getName()}'");
+                    throw new Exception("VirtualMachineInterface not found for vm='{$this->getVirtualMachine()}', name='{$this->getName()}'");
                 }
                 if (($res['count'] ?? 0) > 1) {
-                    throw new CloudGenException("Multiple VirtualMachineInterface entries found for vm='{$this->getVirtualMachine()}', name='{$this->getName()}'");
+                    throw new Exception("Multiple VirtualMachineInterface entries found for vm='{$this->getVirtualMachine()}', name='{$this->getName()}'");
                 }
                 $this->loadFromApiResult($res['results'][0]);
                 return;
             }
 
-            throw new CloudGenException("Can't load VirtualMachineInterface without 'id' or ('virtual_machine' and 'name')");
+            throw new Exception("Can't load VirtualMachineInterface without 'id' or ('virtual_machine' and 'name')");
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't load the Virtual Machine Interface: {$e->getMessage()}");
+            throw new Exception("Couldn't load the Virtual Machine Interface: {$e->getMessage()}");
         }
     }
 
@@ -102,65 +102,65 @@ class VirtualMachineInterface
      * List with optional filters
      * @param array $filters
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function list(array $filters = []): array
     {
         try {
             return self::$client->getHttpClient()->get("/virtualization/interfaces/", $filters);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't list Virtual Machine Interfaces: {$e->getMessage()}");
+            throw new Exception("Couldn't list Virtual Machine Interfaces: {$e->getMessage()}");
         }
     }
 
     /**
      * Replace (PUT)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function edit(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't edit VirtualMachineInterface without 'id'");
+            throw new Exception("Can't edit VirtualMachineInterface without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->put("/virtualization/interfaces/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't edit the Virtual Machine Interface: {$e->getMessage()}");
+            throw new Exception("Couldn't edit the Virtual Machine Interface: {$e->getMessage()}");
         }
     }
 
     /**
      * Partial Update (PATCH)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function update(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't update VirtualMachineInterface without 'id'");
+            throw new Exception("Can't update VirtualMachineInterface without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->patch("/virtualization/interfaces/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't update the Virtual Machine Interface: {$e->getMessage()}");
+            throw new Exception("Couldn't update the Virtual Machine Interface: {$e->getMessage()}");
         }
     }
 
     /**
      * Delete (DELETE)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function delete(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't delete VirtualMachineInterface without 'id'");
+            throw new Exception("Can't delete VirtualMachineInterface without 'id'");
         }
         try {
             self::$client->getHttpClient()->delete("/virtualization/interfaces/" . $this->getId() . "/", []);
             $this->setId(null);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't delete the Virtual Machine Interface: {$e->getMessage()}");
+            throw new Exception("Couldn't delete the Virtual Machine Interface: {$e->getMessage()}");
         }
     }
 
@@ -170,7 +170,7 @@ class VirtualMachineInterface
      * List all interfaces for a VM
      * @param string $vmId
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function listByVm(string $vmId): array
     {
@@ -182,7 +182,7 @@ class VirtualMachineInterface
     /**
      * Assign or update primary MAC by MacAddress id
      * @param string $macId
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function setPrimaryMacById(string $macId): void
     {
@@ -193,7 +193,7 @@ class VirtualMachineInterface
     /**
      * Assign untagged VLAN by id and patch
      * @param string $vlanId
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function assignUntaggedVlan(string $vlanId): void
     {
@@ -204,7 +204,7 @@ class VirtualMachineInterface
     /**
      * Replace tagged VLANs set and patch
      * @param array $vlanIds
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function updateTaggedVlans(array $vlanIds): void
     {
@@ -215,7 +215,7 @@ class VirtualMachineInterface
     /**
      * Add a single tagged VLAN id and patch
      * @param string $vlanId
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function addTaggedVlan(string $vlanId): void
     {
@@ -227,7 +227,7 @@ class VirtualMachineInterface
     /**
      * Remove a single tagged VLAN id and patch
      * @param string $vlanId
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function removeTaggedVlan(string $vlanId): void
     {

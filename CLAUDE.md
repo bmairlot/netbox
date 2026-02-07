@@ -50,7 +50,7 @@ The underlying `mkevenaar\NetBox\Client` requires two environment variables:
 - `getAddParamArr()` / `getEditParamArr()` build request payloads, only including non-null optional fields
 - `loadFromApiResult(array $res)` hydrates the object from API response arrays
 - `extractId($maybe)` static helper handles NetBox's polymorphic responses (nested `{id:...}` objects or plain scalars)
-- `CloudGenException` wraps all `GuzzleException` errors
+- `Exception` wraps all `GuzzleException` errors
 
 **Inconsistency notes:**
 - `Prefix` and `Vlan` are older/simpler (fewer CRUD methods, different coding style)

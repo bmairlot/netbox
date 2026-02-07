@@ -43,25 +43,25 @@ class IpAddress
 
     /**
      * Create (POST)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function add(): void
     {
         if (empty($this->getAddress())) {
-            throw new CloudGenException("Missing address for IpAddress");
+            throw new Exception("Missing address for IpAddress");
         }
 
         try {
             $res = self::$client->getHttpClient()->post("/ipam/ip-addresses/", $this->getAddParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't create the IP Address: {$e->getMessage()}");
+            throw new Exception("Couldn't create the IP Address: {$e->getMessage()}");
         }
     }
 
     /**
      * Read single (by id or by address + vrf)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function load(): void
     {
@@ -81,18 +81,18 @@ class IpAddress
                 $res = self::$client->getHttpClient()->get("/ipam/ip-addresses/", $params);
 
                 if (($res['count'] ?? 0) === 0) {
-                    throw new CloudGenException("IpAddress not found for address='{$this->getAddress()}'");
+                    throw new Exception("IpAddress not found for address='{$this->getAddress()}'");
                 }
                 if (($res['count'] ?? 0) > 1) {
-                    throw new CloudGenException("Multiple IpAddress entries found for address='{$this->getAddress()}'. Consider specifying VRF.");
+                    throw new Exception("Multiple IpAddress entries found for address='{$this->getAddress()}'. Consider specifying VRF.");
                 }
                 $this->loadFromApiResult($res['results'][0]);
                 return;
             }
 
-            throw new CloudGenException("Can't load IpAddress without 'id' or 'address'");
+            throw new Exception("Can't load IpAddress without 'id' or 'address'");
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't load the IP Address: {$e->getMessage()}");
+            throw new Exception("Couldn't load the IP Address: {$e->getMessage()}");
         }
     }
 
@@ -100,65 +100,65 @@ class IpAddress
      * List with optional filters
      * @param array $filters
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function list(array $filters = []): array
     {
         try {
             return self::$client->getHttpClient()->get("/ipam/ip-addresses/", $filters);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't list IP Addresses: {$e->getMessage()}");
+            throw new Exception("Couldn't list IP Addresses: {$e->getMessage()}");
         }
     }
 
     /**
      * Replace (PUT)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function edit(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't edit IpAddress without 'id'");
+            throw new Exception("Can't edit IpAddress without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->put("/ipam/ip-addresses/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't edit the IP Address: {$e->getMessage()}");
+            throw new Exception("Couldn't edit the IP Address: {$e->getMessage()}");
         }
     }
 
     /**
      * Partial Update (PATCH)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function update(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't update IpAddress without 'id'");
+            throw new Exception("Can't update IpAddress without 'id'");
         }
         try {
             $res = self::$client->getHttpClient()->patch("/ipam/ip-addresses/" . $this->getId() . "/", $this->getEditParamArr());
             $this->loadFromApiResult($res);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't update the IP Address: {$e->getMessage()}");
+            throw new Exception("Couldn't update the IP Address: {$e->getMessage()}");
         }
     }
 
     /**
      * Delete (DELETE)
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function delete(): void
     {
         if (is_null($this->getId())) {
-            throw new CloudGenException("Can't delete IpAddress without 'id'");
+            throw new Exception("Can't delete IpAddress without 'id'");
         }
         try {
             self::$client->getHttpClient()->delete("/ipam/ip-addresses/" . $this->getId() . "/", []);
             $this->setId(null);
         } catch (GuzzleException $e) {
-            throw new CloudGenException("Couldn't delete the IP Address: {$e->getMessage()}");
+            throw new Exception("Couldn't delete the IP Address: {$e->getMessage()}");
         }
     }
 
@@ -168,7 +168,7 @@ class IpAddress
      * List all IPs in a specific VRF
      * @param string $vrfId
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function listByVrf(string $vrfId): array
     {
@@ -180,7 +180,7 @@ class IpAddress
      * @param string $objectType e.g., "virtualization.vminterface"
      * @param string $objectId
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function listByAssignedObject(string $objectType, string $objectId): array
     {
@@ -194,7 +194,7 @@ class IpAddress
      * List all IPs for a VM interface
      * @param string $vmInterfaceId
      * @return array
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function listByVmInterface(string $vmInterfaceId): array
     {
@@ -204,7 +204,7 @@ class IpAddress
     /**
      * Assign IP to a VM interface and patch
      * @param string $vmInterfaceId
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function assignToVmInterface(string $vmInterfaceId): void
     {
@@ -216,7 +216,7 @@ class IpAddress
     /**
      * Assign IP to a device interface and patch
      * @param string $interfaceId
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function assignToInterface(string $interfaceId): void
     {
@@ -227,7 +227,7 @@ class IpAddress
 
     /**
      * Unassign IP from any object
-     * @throws CloudGenException
+     * @throws Exception
      */
     public function unassign(): void
     {
