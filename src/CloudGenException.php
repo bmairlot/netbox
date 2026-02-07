@@ -1,5 +1,5 @@
 <?php
-namespace unamur\CloudGen;
+namespace Ancalagon\Netbox;
 
 class CloudGenException extends \Exception
 {

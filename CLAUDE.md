@@ -23,8 +23,7 @@ The underlying `mkevenaar\NetBox\Client` requires two environment variables:
 
 ## Architecture
 
-**Namespace:** `unamur\CloudGen` (PSR-4 autoloaded from `src/`)
-Note: the composer.json PSR-4 mapping uses `Ancalagon\Netbox\` but the actual source files use `namespace unamur\CloudGen` — these are currently mismatched.
+**Namespace:** `Ancalagon\Netbox` (PSR-4 autoloaded from `src/`)
 
 **Entity classes** — Each file in `src/` wraps one NetBox API resource with full CRUD:
 
@@ -35,6 +34,8 @@ Note: the composer.json PSR-4 mapping uses `Ancalagon\Netbox\` but the actual so
 | `NetworkInterface` | `/dcim/interfaces/` | Raw HTTP |
 | `IpAddress` | `/ipam/ip-addresses/` | Raw HTTP |
 | `MacAddress` | `/dcim/mac-addresses/` | Raw HTTP |
+| `Owner` | `/tenancy/owners/` | Raw HTTP |
+| `OwnerGroup` | `/tenancy/owner-groups/` | Raw HTTP |
 | `Prefix` | `/ipam/prefixes/` | Uses `mkevenaar` Prefixes API |
 | `Vlan` | `/ipam/vlans/` | Uses `mkevenaar` Vlans API |
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace unamur\CloudGen;
+namespace Ancalagon\Netbox;
 
 use GuzzleHttp\Exception\GuzzleException;
 use mkevenaar\NetBox\Client;

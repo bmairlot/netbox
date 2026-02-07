@@ -1,8 +1,8 @@
 <?php
 
-namespace unamur\CloudGen;
+namespace Ancalagon\Netbox;
 
-use unamur\CloudGen\CloudGenException;
+use Ancalagon\Netbox\CloudGenException;
 use GuzzleHttp\Exception\GuzzleException;
 use mkevenaar\NetBox\Api\IPAM\Vlans;
 
