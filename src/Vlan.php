@@ -4,7 +4,7 @@ namespace Ancalagon\Netbox;
 
 class Vlan
 {
-    private const ENDPOINT = '/ipam/vlans/';
+    private const string ENDPOINT = '/ipam/vlans/';
 
     // Writable fields
     private ?string $id = null;
