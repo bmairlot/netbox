@@ -2,16 +2,14 @@
 
 namespace Ancalagon\Netbox;
 
-use GuzzleHttp\Exception\GuzzleException;
-use mkevenaar\NetBox\Api\Virtualization\VirtualMachines;
-use mkevenaar\NetBox\Client;
-
 class VirtualMachine
 {
-    private ?string $id = 'null';
+    private const ENDPOINT = '/virtualization/virtual-machines/';
+
+    private ?string $id = null;
     private string $name = '';
     private string $status = 'offline';
-    private ?string $tenant = '1';
+    private ?string $tenant = null;
 
     // Optional properties (only sent if explicitly set)
     private ?string $site = null;
@@ -34,19 +32,16 @@ class VirtualMachine
 
     // Read-only/metadata
     private ?string $url = null;
+    private ?string $display_url = null;
     private ?string $display = null;
     private ?string $created = null;
     private ?string $last_updated = null;
 
-    static private VirtualMachines $api;
-    static private Client $client;
+    private static NetboxClient $client;
 
     public function __construct()
     {
-        // New VM has no ID until created
-        $this->setId(null);
-        self::$client = new Client();
-        self::$api = new VirtualMachines(self::$client);
+        self::$client = new NetboxClient();
     }
 
     /**
@@ -55,12 +50,8 @@ class VirtualMachine
      */
     public function add(): void
     {
-        try {
-            $res = self::$api->add($this->getAddParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't create the Virtual Machine: {$e->getMessage()}");
-        }
+        $res = self::$client->post(self::ENDPOINT, $this->getAddParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -69,32 +60,28 @@ class VirtualMachine
      */
     public function load(): void
     {
-        try {
-            if (!is_null($this->getId())) {
-                $res = self::$client->getHttpClient()->get("/virtualization/virtual-machines/" . $this->getId() . "/", []);
-                $this->loadFromApiResult($res);
-                return;
-            }
-
-            if (!empty($this->getName())) {
-                $res = self::$client->getHttpClient()->get("/virtualization/virtual-machines/", [
-                    'name' => $this->getName(),
-                ]);
-
-                if (($res['count'] ?? 0) === 0) {
-                    throw new Exception("VirtualMachine not found for name='{$this->getName()}'");
-                }
-                if (($res['count'] ?? 0) > 1) {
-                    throw new Exception("Multiple VirtualMachine entries found for name='{$this->getName()}'");
-                }
-                $this->loadFromApiResult($res['results'][0]);
-                return;
-            }
-
-            throw new Exception("Can't load VirtualMachine without 'id' or 'name'");
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't load the Virtual Machine: {$e->getMessage()}");
+        if (!is_null($this->getId())) {
+            $res = self::$client->get(self::ENDPOINT . $this->getId() . '/');
+            $this->loadFromApiResult($res);
+            return;
         }
+
+        if (!empty($this->getName())) {
+            $res = self::$client->get(self::ENDPOINT, [
+                'name' => $this->getName(),
+            ]);
+
+            if (($res['count'] ?? 0) === 0) {
+                throw new Exception("VirtualMachine not found for name='{$this->getName()}'");
+            }
+            if (($res['count'] ?? 0) > 1) {
+                throw new Exception("Multiple VirtualMachine entries found for name='{$this->getName()}'");
+            }
+            $this->loadFromApiResult($res['results'][0]);
+            return;
+        }
+
+        throw new Exception("Can't load VirtualMachine without 'id' or 'name'");
     }
 
     /**
@@ -105,11 +92,7 @@ class VirtualMachine
      */
     public function list(array $filters = []): array
     {
-        try {
-            return self::$client->getHttpClient()->get("/virtualization/virtual-machines/", $filters);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't list Virtual Machines: {$e->getMessage()}");
-        }
+        return self::$client->get(self::ENDPOINT, $filters);
     }
 
     /**
@@ -121,12 +104,9 @@ class VirtualMachine
         if (is_null($this->getId())) {
             throw new Exception("Can't edit VirtualMachine without 'id'");
         }
-        try {
-            $res = self::$client->getHttpClient()->put("/virtualization/virtual-machines/" . $this->getId() . "/", $this->getEditParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't edit the Virtual Machine: {$e->getMessage()}");
-        }
+
+        $res = self::$client->put(self::ENDPOINT . $this->getId() . '/', $this->getEditParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -138,12 +118,9 @@ class VirtualMachine
         if (is_null($this->getId())) {
             throw new Exception("Can't update VirtualMachine without 'id'");
         }
-        try {
-            $res = self::$client->getHttpClient()->patch("/virtualization/virtual-machines/" . $this->getId() . "/", $this->getEditParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't update the Virtual Machine: {$e->getMessage()}");
-        }
+
+        $res = self::$client->patch(self::ENDPOINT . $this->getId() . '/', $this->getEditParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -155,12 +132,9 @@ class VirtualMachine
         if (is_null($this->getId())) {
             throw new Exception("Can't delete VirtualMachine without 'id'");
         }
-        try {
-            self::$client->getHttpClient()->delete("/virtualization/virtual-machines/" . $this->getId() . "/", []);
-            $this->setId(null);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't delete the Virtual Machine: {$e->getMessage()}");
-        }
+
+        self::$client->delete(self::ENDPOINT . $this->getId() . '/');
+        $this->setId(null);
     }
 
     private function getAddParamArr(): array
@@ -171,60 +145,24 @@ class VirtualMachine
         ];
 
         // Optional values only when set
-        if (!is_null($this->getTenant())) {
-            $params['tenant'] = $this->getTenant();
-        }
-        if (!is_null($this->getSite())) {
-            $params['site'] = $this->getSite();
-        }
-        if (!is_null($this->getCluster())) {
-            $params['cluster'] = $this->getCluster();
-        }
-        if (!is_null($this->getDevice())) {
-            $params['device'] = $this->getDevice();
-        }
-        if (!is_null($this->getSerial())) {
-            $params['serial'] = $this->getSerial();
-        }
-        if (!is_null($this->getRole())) {
-            $params['role'] = $this->getRole();
-        }
-        if (!is_null($this->getPlatform())) {
-            $params['platform'] = $this->getPlatform();
-        }
-        if (!is_null($this->getPrimaryIp4())) {
-            $params['primary_ip4'] = $this->getPrimaryIp4();
-        }
-        if (!is_null($this->getPrimaryIp6())) {
-            $params['primary_ip6'] = $this->getPrimaryIp6();
-        }
-        if (!is_null($this->getVcpus())) {
-            $params['vcpus'] = $this->getVcpus();
-        }
-        if (!is_null($this->getMemory())) {
-            $params['memory'] = $this->getMemory();
-        }
-        if (!is_null($this->getDisk())) {
-            $params['disk'] = $this->getDisk();
-        }
-        if (!empty($this->getDescription())) {
-            $params['description'] = $this->getDescription();
-        }
-        if (!empty($this->getComments())) {
-            $params['comments'] = $this->getComments();
-        }
-        if (!is_null($this->getConfigTemplate())) {
-            $params['config_template'] = $this->getConfigTemplate();
-        }
-        if (!is_null($this->getLocalContextData())) {
-            $params['local_context_data'] = $this->getLocalContextData();
-        }
-        if (!empty($this->getTags())) {
-            $params['tags'] = $this->getTags();
-        }
-        if (!empty($this->getCustomFields())) {
-            $params['custom_fields'] = $this->getCustomFields();
-        }
+        if (!is_null($this->getTenant())) { $params['tenant'] = $this->getTenant(); }
+        if (!is_null($this->getSite())) { $params['site'] = $this->getSite(); }
+        if (!is_null($this->getCluster())) { $params['cluster'] = $this->getCluster(); }
+        if (!is_null($this->getDevice())) { $params['device'] = $this->getDevice(); }
+        if (!is_null($this->getSerial())) { $params['serial'] = $this->getSerial(); }
+        if (!is_null($this->getRole())) { $params['role'] = $this->getRole(); }
+        if (!is_null($this->getPlatform())) { $params['platform'] = $this->getPlatform(); }
+        if (!is_null($this->getPrimaryIp4())) { $params['primary_ip4'] = $this->getPrimaryIp4(); }
+        if (!is_null($this->getPrimaryIp6())) { $params['primary_ip6'] = $this->getPrimaryIp6(); }
+        if (!is_null($this->getVcpus())) { $params['vcpus'] = $this->getVcpus(); }
+        if (!is_null($this->getMemory())) { $params['memory'] = $this->getMemory(); }
+        if (!is_null($this->getDisk())) { $params['disk'] = $this->getDisk(); }
+        if (!empty($this->getDescription())) { $params['description'] = $this->getDescription(); }
+        if (!empty($this->getComments())) { $params['comments'] = $this->getComments(); }
+        if (!is_null($this->getConfigTemplate())) { $params['config_template'] = $this->getConfigTemplate(); }
+        if (!is_null($this->getLocalContextData())) { $params['local_context_data'] = $this->getLocalContextData(); }
+        if (!empty($this->getTags())) { $params['tags'] = $this->getTags(); }
+        if (!empty($this->getCustomFields())) { $params['custom_fields'] = $this->getCustomFields(); }
 
         return $params;
     }
@@ -265,6 +203,7 @@ class VirtualMachine
 
         // Read-only
         $this->url = $res['url'] ?? $this->url;
+        $this->display_url = $res['display_url'] ?? $this->display_url;
         $this->display = $res['display'] ?? $this->display;
         $this->created = $res['created'] ?? $this->created;
         $this->last_updated = $res['last_updated'] ?? $this->last_updated;
@@ -343,6 +282,7 @@ class VirtualMachine
     public function setCustomFields(array $custom_fields): VirtualMachine { $this->custom_fields = $custom_fields; return $this; }
 
     public function getUrl(): ?string { return $this->url; }
+    public function getDisplayUrl(): ?string { return $this->display_url; }
     public function getDisplay(): ?string { return $this->display; }
     public function getCreated(): ?string { return $this->created; }
     public function getLastUpdated(): ?string { return $this->last_updated; }

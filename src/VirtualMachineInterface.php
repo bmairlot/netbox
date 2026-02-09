@@ -2,12 +2,11 @@
 
 namespace Ancalagon\Netbox;
 
-use GuzzleHttp\Exception\GuzzleException;
-use mkevenaar\NetBox\Client;
-
 class VirtualMachineInterface
 {
-    private ?string $id = 'null';
+    private const ENDPOINT = '/virtualization/interfaces/';
+
+    private ?string $id = null;
     private ?string $virtual_machine = null; // required relationship (VM id)
     private string $name = '';
     private bool $enabled = true;
@@ -25,19 +24,18 @@ class VirtualMachineInterface
     private array $tags = [];
     private array $custom_fields = [];
 
-    // Additional common fields returned by NetBox (kept for consistency with MacAddress)
+    // Read-only fields
     private ?string $url = null;
+    private ?string $display_url = null;
     private ?string $display = null;
     private ?string $created = null;
     private ?string $last_updated = null;
 
-    static private Client $client;
+    private static NetboxClient $client;
 
     public function __construct()
     {
-        // New object has no ID until created
-        $this->setId(null);
-        self::$client = new Client();
+        self::$client = new NetboxClient();
     }
 
     /**
@@ -53,12 +51,8 @@ class VirtualMachineInterface
             throw new Exception("Missing name for VirtualMachineInterface");
         }
 
-        try {
-            $res = self::$client->getHttpClient()->post("/virtualization/interfaces/", $this->getAddParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't create the Virtual Machine Interface: {$e->getMessage()}");
-        }
+        $res = self::$client->post(self::ENDPOINT, $this->getAddParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -67,35 +61,31 @@ class VirtualMachineInterface
      */
     public function load(): void
     {
-        try {
-            if (!is_null($this->getId())) {
-                $res = self::$client->getHttpClient()->get("/virtualization/interfaces/" . $this->getId() . "/", []);
-                $this->loadFromApiResult($res);
-                return;
-            }
-
-            if (!empty($this->getVirtualMachine()) && !empty($this->getName())) {
-                // NetBox API: 'virtual_machine' expects name/slug, 'virtual_machine_id' expects numeric ID
-                $vmFilterKey = is_numeric($this->getVirtualMachine()) ? 'virtual_machine_id' : 'virtual_machine';
-                $res = self::$client->getHttpClient()->get("/virtualization/interfaces/", [
-                    $vmFilterKey => $this->getVirtualMachine(),
-                    'name' => $this->getName(),
-                ]);
-
-                if (($res['count'] ?? 0) === 0) {
-                    throw new Exception("VirtualMachineInterface not found for vm='{$this->getVirtualMachine()}', name='{$this->getName()}'");
-                }
-                if (($res['count'] ?? 0) > 1) {
-                    throw new Exception("Multiple VirtualMachineInterface entries found for vm='{$this->getVirtualMachine()}', name='{$this->getName()}'");
-                }
-                $this->loadFromApiResult($res['results'][0]);
-                return;
-            }
-
-            throw new Exception("Can't load VirtualMachineInterface without 'id' or ('virtual_machine' and 'name')");
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't load the Virtual Machine Interface: {$e->getMessage()}");
+        if (!is_null($this->getId())) {
+            $res = self::$client->get(self::ENDPOINT . $this->getId() . '/');
+            $this->loadFromApiResult($res);
+            return;
         }
+
+        if (!empty($this->getVirtualMachine()) && !empty($this->getName())) {
+            // NetBox API: 'virtual_machine' expects name/slug, 'virtual_machine_id' expects numeric ID
+            $vmFilterKey = is_numeric($this->getVirtualMachine()) ? 'virtual_machine_id' : 'virtual_machine';
+            $res = self::$client->get(self::ENDPOINT, [
+                $vmFilterKey => $this->getVirtualMachine(),
+                'name' => $this->getName(),
+            ]);
+
+            if (($res['count'] ?? 0) === 0) {
+                throw new Exception("VirtualMachineInterface not found for vm='{$this->getVirtualMachine()}', name='{$this->getName()}'");
+            }
+            if (($res['count'] ?? 0) > 1) {
+                throw new Exception("Multiple VirtualMachineInterface entries found for vm='{$this->getVirtualMachine()}', name='{$this->getName()}'");
+            }
+            $this->loadFromApiResult($res['results'][0]);
+            return;
+        }
+
+        throw new Exception("Can't load VirtualMachineInterface without 'id' or ('virtual_machine' and 'name')");
     }
 
     /**
@@ -106,11 +96,7 @@ class VirtualMachineInterface
      */
     public function list(array $filters = []): array
     {
-        try {
-            return self::$client->getHttpClient()->get("/virtualization/interfaces/", $filters);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't list Virtual Machine Interfaces: {$e->getMessage()}");
-        }
+        return self::$client->get(self::ENDPOINT, $filters);
     }
 
     /**
@@ -122,12 +108,9 @@ class VirtualMachineInterface
         if (is_null($this->getId())) {
             throw new Exception("Can't edit VirtualMachineInterface without 'id'");
         }
-        try {
-            $res = self::$client->getHttpClient()->put("/virtualization/interfaces/" . $this->getId() . "/", $this->getEditParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't edit the Virtual Machine Interface: {$e->getMessage()}");
-        }
+
+        $res = self::$client->put(self::ENDPOINT . $this->getId() . '/', $this->getEditParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -139,12 +122,9 @@ class VirtualMachineInterface
         if (is_null($this->getId())) {
             throw new Exception("Can't update VirtualMachineInterface without 'id'");
         }
-        try {
-            $res = self::$client->getHttpClient()->patch("/virtualization/interfaces/" . $this->getId() . "/", $this->getEditParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't update the Virtual Machine Interface: {$e->getMessage()}");
-        }
+
+        $res = self::$client->patch(self::ENDPOINT . $this->getId() . '/', $this->getEditParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -156,12 +136,9 @@ class VirtualMachineInterface
         if (is_null($this->getId())) {
             throw new Exception("Can't delete VirtualMachineInterface without 'id'");
         }
-        try {
-            self::$client->getHttpClient()->delete("/virtualization/interfaces/" . $this->getId() . "/", []);
-            $this->setId(null);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't delete the Virtual Machine Interface: {$e->getMessage()}");
-        }
+
+        self::$client->delete(self::ENDPOINT . $this->getId() . '/');
+        $this->setId(null);
     }
 
     // Helper operations
@@ -263,13 +240,11 @@ class VirtualMachineInterface
 
     private function getEditParamArr(): array
     {
-        // For simplicity, reuse add param builder which respects optional fields
         return $this->getAddParamArr();
     }
 
     private function loadFromApiResult(array $res): void
     {
-        // Scalars and simple relationships may be returned as objects; accept both id or object with id
         $this->setId((string)($res['id'] ?? null));
         $this->setVirtualMachine(self::extractId($res['virtual_machine'] ?? null));
         $this->setName((string)($res['name'] ?? ''));
@@ -297,6 +272,7 @@ class VirtualMachineInterface
         $this->setCustomFields($res['custom_fields'] ?? []);
 
         $this->url = $res['url'] ?? null;
+        $this->display_url = $res['display_url'] ?? null;
         $this->display = $res['display'] ?? null;
         $this->created = $res['created'] ?? null;
         $this->last_updated = $res['last_updated'] ?? null;
@@ -359,4 +335,10 @@ class VirtualMachineInterface
 
     public function getCustomFields(): array { return $this->custom_fields; }
     public function setCustomFields(array $custom_fields): VirtualMachineInterface { $this->custom_fields = $custom_fields; return $this; }
+
+    public function getUrl(): ?string { return $this->url; }
+    public function getDisplayUrl(): ?string { return $this->display_url; }
+    public function getDisplay(): ?string { return $this->display; }
+    public function getCreated(): ?string { return $this->created; }
+    public function getLastUpdated(): ?string { return $this->last_updated; }
 }
