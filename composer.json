@@ -25,5 +25,9 @@
         "optimize-autoloader": true,
         "apcu-autoloader": true,
         "sort-packages": true
+    },
+    "require-dev": {
+        "ancalagon/netbox-podman": "^0.0.10",
+        "phpunit/phpunit": "^11.0"
     }
 }
