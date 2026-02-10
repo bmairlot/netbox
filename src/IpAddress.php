@@ -2,12 +2,12 @@
 
 namespace Ancalagon\Netbox;
 
-use GuzzleHttp\Exception\GuzzleException;
-use mkevenaar\NetBox\Client;
-
 class IpAddress
 {
-    private ?string $id = 'null';
+    private const string ENDPOINT = '/ipam/ip-addresses/';
+
+    // Writable fields
+    private ?string $id = null;
     private string $address = '';  // required - CIDR notation (e.g., "192.168.1.1/24")
     private ?string $vrf = null;   // VRF id
     private ?string $tenant = null; // Tenant id
@@ -22,7 +22,7 @@ class IpAddress
     private array $tags = [];
     private array $custom_fields = [];
 
-    // Read-only fields returned by NetBox
+    // Read-only fields
     private ?string $url = null;
     private ?string $display_url = null;
     private ?string $display = null;
@@ -32,13 +32,11 @@ class IpAddress
     private ?string $created = null;
     private ?string $last_updated = null;
 
-    static private Client $client;
+    private static NetboxClient $client;
 
     public function __construct()
     {
-        // New object has no ID until created
-        $this->setId(null);
-        self::$client = new Client();
+        self::$client = new NetboxClient();
     }
 
     /**
@@ -51,12 +49,8 @@ class IpAddress
             throw new Exception("Missing address for IpAddress");
         }
 
-        try {
-            $res = self::$client->getHttpClient()->post("/ipam/ip-addresses/", $this->getAddParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't create the IP Address: {$e->getMessage()}");
-        }
+        $res = self::$client->post(self::ENDPOINT, $this->getAddParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -65,35 +59,34 @@ class IpAddress
      */
     public function load(): void
     {
-        try {
-            if (!is_null($this->getId())) {
-                $res = self::$client->getHttpClient()->get("/ipam/ip-addresses/" . $this->getId() . "/", []);
-                $this->loadFromApiResult($res);
-                return;
-            }
-
-            if (!empty($this->getAddress())) {
-                $params = ['address' => $this->getAddress()];
-                if (!is_null($this->getVrf())) {
-                    $params['vrf_id'] = $this->getVrf();
-                }
-
-                $res = self::$client->getHttpClient()->get("/ipam/ip-addresses/", $params);
-
-                if (($res['count'] ?? 0) === 0) {
-                    throw new Exception("IpAddress not found for address='{$this->getAddress()}'");
-                }
-                if (($res['count'] ?? 0) > 1) {
-                    throw new Exception("Multiple IpAddress entries found for address='{$this->getAddress()}'. Consider specifying VRF.");
-                }
-                $this->loadFromApiResult($res['results'][0]);
-                return;
-            }
-
-            throw new Exception("Can't load IpAddress without 'id' or 'address'");
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't load the IP Address: {$e->getMessage()}");
+        if (!is_null($this->getId())) {
+            $res = self::$client->get(self::ENDPOINT . $this->getId() . '/');
+            $this->loadFromApiResult($res);
+            return;
         }
+
+        $params = [];
+        if (!empty($this->getAddress())) {
+            $params['address'] = $this->getAddress();
+            if (!is_null($this->getVrf())) {
+                $params['vrf_id'] = $this->getVrf();
+            }
+        }
+
+        if (empty($params)) {
+            throw new Exception("Can't load IpAddress without 'id' or 'address'");
+        }
+
+        $res = self::$client->get(self::ENDPOINT, $params);
+
+        if (($res['count'] ?? 0) === 0) {
+            throw new Exception("IpAddress not found");
+        }
+        if (($res['count'] ?? 0) > 1) {
+            throw new Exception("Multiple IpAddresses returned by query");
+        }
+
+        $this->loadFromApiResult($res['results'][0]);
     }
 
     /**
@@ -104,11 +97,7 @@ class IpAddress
      */
     public function list(array $filters = []): array
     {
-        try {
-            return self::$client->getHttpClient()->get("/ipam/ip-addresses/", $filters);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't list IP Addresses: {$e->getMessage()}");
-        }
+        return self::$client->get(self::ENDPOINT, $filters);
     }
 
     /**
@@ -120,12 +109,9 @@ class IpAddress
         if (is_null($this->getId())) {
             throw new Exception("Can't edit IpAddress without 'id'");
         }
-        try {
-            $res = self::$client->getHttpClient()->put("/ipam/ip-addresses/" . $this->getId() . "/", $this->getEditParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't edit the IP Address: {$e->getMessage()}");
-        }
+
+        $res = self::$client->put(self::ENDPOINT . $this->getId() . '/', $this->getEditParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -137,12 +123,9 @@ class IpAddress
         if (is_null($this->getId())) {
             throw new Exception("Can't update IpAddress without 'id'");
         }
-        try {
-            $res = self::$client->getHttpClient()->patch("/ipam/ip-addresses/" . $this->getId() . "/", $this->getEditParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't update the IP Address: {$e->getMessage()}");
-        }
+
+        $res = self::$client->patch(self::ENDPOINT . $this->getId() . '/', $this->getEditParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -154,12 +137,9 @@ class IpAddress
         if (is_null($this->getId())) {
             throw new Exception("Can't delete IpAddress without 'id'");
         }
-        try {
-            self::$client->getHttpClient()->delete("/ipam/ip-addresses/" . $this->getId() . "/", []);
-            $this->setId(null);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't delete the IP Address: {$e->getMessage()}");
-        }
+
+        self::$client->delete(self::ENDPOINT . $this->getId() . '/');
+        $this->setId(null);
     }
 
     // --- Helper operations ---
@@ -267,7 +247,7 @@ class IpAddress
 
     private function loadFromApiResult(array $res): void
     {
-        $this->setId((string)($res['id'] ?? null));
+        $this->setId(isset($res['id']) ? (string)$res['id'] : null);
         $this->setAddress((string)($res['address'] ?? ''));
         $this->setVrf(self::extractId($res['vrf'] ?? null));
         $this->setTenant(self::extractId($res['tenant'] ?? null));

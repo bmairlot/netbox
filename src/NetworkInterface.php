@@ -2,11 +2,10 @@
 
 namespace Ancalagon\Netbox;
 
-use GuzzleHttp\Exception\GuzzleException;
-use mkevenaar\NetBox\Client;
-
 class NetworkInterface
 {
+    private const string ENDPOINT = '/dcim/interfaces/';
+
     // Core identity
     private ?string $id = null;
 
@@ -50,20 +49,22 @@ class NetworkInterface
     private array $vdcs = []; // array of VDC ids (NetBox 4.x)
     private ?string $module = null; // module id
 
-    // Read-only/metadata
+    // Read-only fields
     private ?string $url = null;
+    private ?string $display_url = null;
     private ?string $display = null;
     private ?string $created = null;
     private ?string $last_updated = null;
 
-    static private Client $client;
+    private static NetboxClient $client;
 
     public function __construct()
     {
-        self::$client = new Client();
+        self::$client = new NetboxClient();
     }
 
     // CRUD
+
     /**
      * Create (POST)
      * @throws Exception
@@ -77,12 +78,8 @@ class NetworkInterface
             throw new Exception("Missing name for NetworkInterface");
         }
 
-        try {
-            $res = self::$client->getHttpClient()->post("/dcim/interfaces/", $this->getAddParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't create the DCIM Interface: {$e->getMessage()}");
-        }
+        $res = self::$client->post(self::ENDPOINT, $this->getAddParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -91,35 +88,31 @@ class NetworkInterface
      */
     public function load(): void
     {
-        try {
-            if (!is_null($this->getId())) {
-                $res = self::$client->getHttpClient()->get("/dcim/interfaces/" . $this->getId() . "/", []);
-                $this->loadFromApiResult($res);
-                return;
-            }
-
-            if (!empty($this->getDevice()) && !empty($this->getName())) {
-                // NetBox API: 'device' expects name/slug, 'device_id' expects numeric ID
-                $deviceFilterKey = is_numeric($this->getDevice()) ? 'device_id' : 'device';
-                $res = self::$client->getHttpClient()->get("/dcim/interfaces/", [
-                    $deviceFilterKey => $this->getDevice(),
-                    'name' => $this->getName(),
-                ]);
-
-                if (($res['count'] ?? 0) === 0) {
-                    throw new Exception("NetworkInterface not found for device='{$this->getDevice()}', name='{$this->getName()}'");
-                }
-                if (($res['count'] ?? 0) > 1) {
-                    throw new Exception("Multiple NetworkInterface entries found for device='{$this->getDevice()}', name='{$this->getName()}'");
-                }
-                $this->loadFromApiResult($res['results'][0]);
-                return;
-            }
-
-            throw new Exception("Can't load NetworkInterface without 'id' or ('device' and 'name')");
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't load the DCIM Interface: {$e->getMessage()}");
+        if (!is_null($this->getId())) {
+            $res = self::$client->get(self::ENDPOINT . $this->getId() . '/');
+            $this->loadFromApiResult($res);
+            return;
         }
+
+        if (!empty($this->getDevice()) && !empty($this->getName())) {
+            // NetBox API: 'device' expects name/slug, 'device_id' expects numeric ID
+            $deviceFilterKey = is_numeric($this->getDevice()) ? 'device_id' : 'device';
+            $res = self::$client->get(self::ENDPOINT, [
+                $deviceFilterKey => $this->getDevice(),
+                'name' => $this->getName(),
+            ]);
+
+            if (($res['count'] ?? 0) === 0) {
+                throw new Exception("NetworkInterface not found");
+            }
+            if (($res['count'] ?? 0) > 1) {
+                throw new Exception("Multiple NetworkInterfaces returned by query");
+            }
+            $this->loadFromApiResult($res['results'][0]);
+            return;
+        }
+
+        throw new Exception("Can't load NetworkInterface without 'id' or ('device' and 'name')");
     }
 
     /**
@@ -130,11 +123,7 @@ class NetworkInterface
      */
     public function list(array $filters = []): array
     {
-        try {
-            return self::$client->getHttpClient()->get("/dcim/interfaces/", $filters);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't list DCIM Interfaces: {$e->getMessage()}");
-        }
+        return self::$client->get(self::ENDPOINT, $filters);
     }
 
     /**
@@ -146,12 +135,9 @@ class NetworkInterface
         if (is_null($this->getId())) {
             throw new Exception("Can't edit NetworkInterface without 'id'");
         }
-        try {
-            $res = self::$client->getHttpClient()->put("/dcim/interfaces/" . $this->getId() . "/", $this->getEditParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't edit the DCIM Interface: {$e->getMessage()}");
-        }
+
+        $res = self::$client->put(self::ENDPOINT . $this->getId() . '/', $this->getEditParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -163,12 +149,9 @@ class NetworkInterface
         if (is_null($this->getId())) {
             throw new Exception("Can't update NetworkInterface without 'id'");
         }
-        try {
-            $res = self::$client->getHttpClient()->patch("/dcim/interfaces/" . $this->getId() . "/", $this->getEditParamArr());
-            $this->loadFromApiResult($res);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't update the DCIM Interface: {$e->getMessage()}");
-        }
+
+        $res = self::$client->patch(self::ENDPOINT . $this->getId() . '/', $this->getEditParamArr());
+        $this->loadFromApiResult($res);
     }
 
     /**
@@ -180,15 +163,13 @@ class NetworkInterface
         if (is_null($this->getId())) {
             throw new Exception("Can't delete NetworkInterface without 'id'");
         }
-        try {
-            self::$client->getHttpClient()->delete("/dcim/interfaces/" . $this->getId() . "/", []);
-            $this->setId(null);
-        } catch (GuzzleException $e) {
-            throw new Exception("Couldn't delete the DCIM Interface: {$e->getMessage()}");
-        }
+
+        self::$client->delete(self::ENDPOINT . $this->getId() . '/');
+        $this->setId(null);
     }
 
-    // Helper operations
+    // --- Helper operations ---
+
     /**
      * List all interfaces for a Device
      * @param string $deviceId
@@ -259,13 +240,14 @@ class NetworkInterface
         })));
     }
 
-    // --- Helpers: payload builders & loader ---
+    // --- Private helpers ---
+
     private function getAddParamArr(): array
     {
         $params = [
             'device' => $this->getDevice(),
             'name' => $this->getName(),
-            'type' => $this->getType(),
+            'type' => $this->getType()['value'] ?? 'virtual',
             'enabled' => $this->isEnabled(),
         ];
 
@@ -305,37 +287,37 @@ class NetworkInterface
 
     private function getEditParamArr(): array
     {
-        // For simplicity, reuse add param builder which respects optional fields
         return $this->getAddParamArr();
     }
 
     private function loadFromApiResult(array $res): void
     {
-
-        $this->setId(isset($res['id']) ? (string)$res['id'] : $this->getId());
+        $this->setId(isset($res['id']) ? (string)$res['id'] : null);
         $this->setDevice(self::extractId($res['device'] ?? null));
         $this->setName((string)($res['name'] ?? $this->getName()));
         $this->setType($res['type'] ?? $this->getType());
-        $this->setLabel(isset($res['label']) ? (string)$res['label'] : $this->getLabel());
+        $this->setLabel(isset($res['label']) ? (string)$res['label'] : null);
         $this->setEnabled((bool)($res['enabled'] ?? $this->isEnabled()));
         $this->setParent(self::extractId($res['parent'] ?? null));
         $this->setBridge(self::extractId($res['bridge'] ?? null));
         $this->setLag(self::extractId($res['lag'] ?? null));
-        $this->setMtu(isset($res['mtu']) ? (int)$res['mtu'] : $this->getMtu());
+        $this->setMtu(isset($res['mtu']) ? (int)$res['mtu'] : null);
         $this->setPrimaryMacAddress(self::extractId($res['primary_mac_address'] ?? null));
-        $this->setSpeed(isset($res['speed']) ? (int)$res['speed'] : $this->getSpeed());
-        $this->setDuplex(isset($res['duplex']) ? (string)$res['duplex'] : $this->getDuplex());
-        $this->setWwn(isset($res['wwn']) ? (string)$res['wwn'] : $this->getWwn());
-        $this->setMgmtOnly((bool)($res['mgmt_only'] ?? $this->isMgmtOnly()));
-        $this->setDescription((string)($res['description'] ?? $this->getDescription()));
-        $this->setMode((string)($res['mode'] ?? $this->getMode()));
-        $this->setRfRole(isset($res['rf_role']) ? (string)$res['rf_role'] : $this->getRfRole());
-        $this->setRfChannel(isset($res['rf_channel']) ? (string)$res['rf_channel'] : $this->getRfChannel());
-        $this->setPoeMode(isset($res['poe_mode']) ? (string)$res['poe_mode'] : $this->getPoeMode());
-        $this->setPoeType(isset($res['poe_type']) ? (string)$res['poe_type'] : $this->getPoeType());
-        $this->setRfChannelFrequency(isset($res['rf_channel_frequency']) ? (int)$res['rf_channel_frequency'] : $this->getRfChannelFrequency());
-        $this->setRfChannelWidth(isset($res['rf_channel_width']) ? (int)$res['rf_channel_width'] : $this->getRfChannelWidth());
-        $this->setTxPower(isset($res['tx_power']) ? (int)$res['tx_power'] : $this->getTxPower());
+        $this->setSpeed(isset($res['speed']) ? (int)$res['speed'] : null);
+        $this->setDuplex(isset($res['duplex']) ? (string)$res['duplex'] : null);
+        $this->setWwn(isset($res['wwn']) ? (string)$res['wwn'] : null);
+        $this->setMgmtOnly((bool)($res['mgmt_only'] ?? false));
+        $this->setDescription((string)($res['description'] ?? ''));
+        if (isset($res['mode'])) {
+            $this->setMode(is_array($res['mode']) ? ($res['mode']['value'] ?? 'access') : (string)$res['mode']);
+        }
+        $this->setRfRole(isset($res['rf_role']) ? (string)$res['rf_role'] : null);
+        $this->setRfChannel(isset($res['rf_channel']) ? (string)$res['rf_channel'] : null);
+        $this->setPoeMode(isset($res['poe_mode']) ? (string)$res['poe_mode'] : null);
+        $this->setPoeType(isset($res['poe_type']) ? (string)$res['poe_type'] : null);
+        $this->setRfChannelFrequency(isset($res['rf_channel_frequency']) ? (int)$res['rf_channel_frequency'] : null);
+        $this->setRfChannelWidth(isset($res['rf_channel_width']) ? (int)$res['rf_channel_width'] : null);
+        $this->setTxPower(isset($res['tx_power']) ? (int)$res['tx_power'] : null);
         $this->setUntaggedVlan(self::extractId($res['untagged_vlan'] ?? null));
         $tagged = $res['tagged_vlans'] ?? [];
         if (is_array($tagged)) {
@@ -345,7 +327,7 @@ class NetworkInterface
         }
         $this->setQinqSvlan(self::extractId($res['qinq_svlan'] ?? null));
         $this->setVlanTranslationPolicy(self::extractId($res['vlan_translation_policy'] ?? null));
-        $this->setMarkConnected(isset($res['mark_connected']) ? (bool)$res['mark_connected'] : $this->isMarkConnected());
+        $this->setMarkConnected(isset($res['mark_connected']) ? (bool)$res['mark_connected'] : false);
         $wlans = $res['wireless_lans'] ?? [];
         if (is_array($wlans)) {
             $this->wireless_lans = array_map(function ($v) { return (string)self::extractId($v); }, $wlans);
@@ -353,16 +335,18 @@ class NetworkInterface
             $this->wireless_lans = [];
         }
         $this->setVrf(self::extractId($res['vrf'] ?? null));
-        $this->setTags($res['tags'] ?? $this->getTags());
-        $this->setCustomFields($res['custom_fields'] ?? $this->getCustomFields());
+        $this->setTags($res['tags'] ?? []);
+        $this->setCustomFields($res['custom_fields'] ?? []);
 
-        $this->vdcs = array_map('strval', $res['vdcs'] ?? $this->vdcs);
-        $this->module = self::extractId($res['module'] ?? $this->module);
+        $this->vdcs = array_map('strval', $res['vdcs'] ?? []);
+        $this->module = self::extractId($res['module'] ?? null);
 
-        $this->url = $res['url'] ?? $this->url;
-        $this->display = $res['display'] ?? $this->display;
-        $this->created = $res['created'] ?? $this->created;
-        $this->last_updated = $res['last_updated'] ?? $this->last_updated;
+        // Read-only fields
+        $this->url = $res['url'] ?? null;
+        $this->display_url = $res['display_url'] ?? null;
+        $this->display = $res['display'] ?? null;
+        $this->created = $res['created'] ?? null;
+        $this->last_updated = $res['last_updated'] ?? null;
     }
 
     private static function extractId($maybe): ?string
@@ -372,7 +356,8 @@ class NetworkInterface
         return (string)$maybe;
     }
 
-    // --- Getters/Setters ---
+    // --- Getters / Setters ---
+
     public function getId(): ?string { return $this->id; }
     public function setId(?string $id): NetworkInterface { $this->id = $id; return $this; }
 
@@ -382,7 +367,7 @@ class NetworkInterface
     public function getName(): string { return $this->name; }
     public function setName(string $name): NetworkInterface { $this->name = $name; return $this; }
 
-    public function getType(): string { return $this->type; }
+    public function getType(): array { return $this->type; }
     public function setType(array $type): NetworkInterface { $this->type = $type; return $this; }
 
     public function getLabel(): ?string { return $this->label; }
@@ -477,4 +462,10 @@ class NetworkInterface
 
     public function getModule(): ?string { return $this->module; }
     public function setModule(?string $module): NetworkInterface { $this->module = $module; return $this; }
+
+    public function getUrl(): ?string { return $this->url; }
+    public function getDisplayUrl(): ?string { return $this->display_url; }
+    public function getDisplay(): ?string { return $this->display; }
+    public function getCreated(): ?string { return $this->created; }
+    public function getLastUpdated(): ?string { return $this->last_updated; }
 }
