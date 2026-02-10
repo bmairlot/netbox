@@ -6,7 +6,7 @@ Each NetBox resource is represented as a PHP class with full CRUD support, fluen
 
 ## Requirements
 
-- PHP 8.4+
+- PHP 8.5+
 - `ext-json`
 - `ext-curl`
 

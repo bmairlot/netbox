@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-PHP library (`ancalagon/netbox`) providing high-level object-oriented wrappers around the NetBox REST API. Uses a custom curl-based `NetboxClient` for all HTTP communication. Requires PHP 8.4+.
+PHP library (`ancalagon/netbox`) providing high-level object-oriented wrappers around the NetBox REST API. Uses a custom curl-based `NetboxClient` for all HTTP communication. Requires PHP 8.5+.
 
 ## Build & Dependencies
 
