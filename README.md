@@ -1,6 +1,6 @@
 # ancalagon/netbox
 
-A PHP library providing high-level object-oriented wrappers around the [NetBox](https://netbox.dev/) REST API. Built on top of [`mkevenaar/netbox`](https://github.com/mkevenaar/netbox-php).
+A PHP library providing high-level object-oriented wrappers around the [NetBox](https://netbox.dev/) REST API.
 
 Each NetBox resource is represented as a PHP class with full CRUD support, fluent setters, and automatic hydration from API responses.
 
@@ -18,12 +18,15 @@ composer require ancalagon/netbox
 
 ## Configuration
 
-The library requires two environment variables to connect to your NetBox instance:
+The library requires three environment variables to connect to your NetBox instance:
 
 ```bash
-export NETBOX_API="https://netbox.example.com/api"
-export NETBOX_API_KEY="your-api-token"
+export NETBOX_URL_PREFIX="https://netbox.example.com/api"
+export NETBOX_KEY="your-key-prefix"
+export NETBOX_TOKEN="your-token-value"
 ```
+
+The API token is assembled as `nbt_{NETBOX_KEY}.{NETBOX_TOKEN}`.
 
 ## Usage
 
@@ -69,6 +72,54 @@ $results = $vm->list(['cluster_id' => '1', 'status' => 'active']);
 $vm->delete();
 ```
 
+### Clusters
+
+```php
+use Ancalagon\Netbox\ClusterType;
+use Ancalagon\Netbox\ClusterGroup;
+use Ancalagon\Netbox\Cluster;
+
+// Create a cluster type and cluster
+$ct = new ClusterType();
+$ct->setName('VMware')->setSlug('vmware');
+$ct->add();
+
+$cluster = new Cluster();
+$cluster->setName('prod-cluster')
+        ->setType($ct->getId())
+        ->setStatus('active');
+$cluster->add();
+```
+
+### Devices
+
+```php
+use Ancalagon\Netbox\DeviceType;
+use Ancalagon\Netbox\DeviceRole;
+use Ancalagon\Netbox\Device;
+
+// Create a device role
+$role = new DeviceRole();
+$role->setName('Server')->setSlug('server');
+$role->add();
+
+// Create a device type (requires manufacturer)
+$dt = new DeviceType();
+$dt->setManufacturer($manufacturerId)
+   ->setModel('PowerEdge R640')
+   ->setSlug('poweredge-r640');
+$dt->add();
+
+// Create a device
+$device = new Device();
+$device->setName('srv-01')
+       ->setDeviceType($dt->getId())
+       ->setRole($role->getId())
+       ->setSite($siteId)
+       ->setStatus('active');
+$device->add();
+```
+
 ### IP Addresses
 
 ```php
@@ -101,7 +152,7 @@ $ip->unassign();
 use Ancalagon\Netbox\Vlan;
 
 $vlan = new Vlan();
-$vlan->setVid('100')
+$vlan->setVid(100)
      ->setName('Management')
      ->setStatus('active')
      ->setDescription('Management VLAN');
@@ -109,7 +160,7 @@ $vlan->add();
 
 // Load by VID
 $vlan = new Vlan();
-$vlan->setVid('100');
+$vlan->setVid(100);
 $vlan->load();
 ```
 
@@ -220,6 +271,14 @@ try {
 } catch (Exception $e) {
     echo $e->getMessage();
 }
+```
+
+## Testing
+
+Integration tests run against a live NetBox instance:
+
+```bash
+vendor/bin/phpunit
 ```
 
 ## CRUD Method Reference
