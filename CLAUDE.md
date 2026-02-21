@@ -44,6 +44,7 @@ The token is assembled as `nbt_{NETBOX_KEY}.{NETBOX_TOKEN}`.
 | `ClusterType` | `/virtualization/cluster-types/` |
 | `ClusterGroup` | `/virtualization/cluster-groups/` |
 | `Cluster` | `/virtualization/clusters/` |
+| `Site` | `/dcim/sites/` |
 | `Device` | `/dcim/devices/` |
 | `DeviceType` | `/dcim/device-types/` |
 | `DeviceRole` | `/dcim/device-roles/` |
