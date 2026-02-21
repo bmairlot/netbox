@@ -48,6 +48,7 @@ The token is assembled as `nbt_{NETBOX_KEY}.{NETBOX_TOKEN}`.
 | `Device` | `/dcim/devices/` |
 | `DeviceType` | `/dcim/device-types/` |
 | `DeviceRole` | `/dcim/device-roles/` |
+| `Platform` | `/dcim/platforms/` |
 | `NetworkInterface` | `/dcim/interfaces/` |
 | `MacAddress` | `/dcim/mac-addresses/` |
 | `IpAddress` | `/ipam/ip-addresses/` |

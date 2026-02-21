@@ -15,6 +15,7 @@ class DeviceType
     private string $part_number = '';
     private float $u_height = 1.0;
     private bool $is_full_depth = true;
+    private bool $exclude_from_utilization = false;
     private ?string $subdevice_role = null;
     private ?string $airflow = null;
     private ?float $weight = null;
@@ -32,6 +33,16 @@ class DeviceType
     private ?string $created = null;
     private ?string $last_updated = null;
     private ?int $device_count = null;
+    private ?int $console_port_template_count = null;
+    private ?int $console_server_port_template_count = null;
+    private ?int $power_port_template_count = null;
+    private ?int $power_outlet_template_count = null;
+    private ?int $interface_template_count = null;
+    private ?int $front_port_template_count = null;
+    private ?int $rear_port_template_count = null;
+    private ?int $device_bay_template_count = null;
+    private ?int $module_bay_template_count = null;
+    private ?int $inventory_item_template_count = null;
     private $front_image = null;
     private $rear_image = null;
 
@@ -160,6 +171,7 @@ class DeviceType
             'slug' => $this->getSlug(),
             'u_height' => $this->getUHeight(),
             'is_full_depth' => $this->isFullDepth(),
+            'exclude_from_utilization' => $this->isExcludeFromUtilization(),
         ];
 
         if (!is_null($this->getDefaultPlatform())) { $params['default_platform'] = (int)$this->getDefaultPlatform(); }
@@ -192,6 +204,7 @@ class DeviceType
         $this->setPartNumber((string)($res['part_number'] ?? ''));
         $this->setUHeight((float)($res['u_height'] ?? 1.0));
         $this->setIsFullDepth((bool)($res['is_full_depth'] ?? true));
+        $this->setExcludeFromUtilization((bool)($res['exclude_from_utilization'] ?? false));
 
         if (isset($res['subdevice_role'])) {
             $this->setSubdeviceRole(is_array($res['subdevice_role']) ? ($res['subdevice_role']['value'] ?? null) : $res['subdevice_role']);
@@ -217,6 +230,16 @@ class DeviceType
         $this->created = $res['created'] ?? null;
         $this->last_updated = $res['last_updated'] ?? null;
         $this->device_count = isset($res['device_count']) ? (int)$res['device_count'] : null;
+        $this->console_port_template_count = isset($res['console_port_template_count']) ? (int)$res['console_port_template_count'] : null;
+        $this->console_server_port_template_count = isset($res['console_server_port_template_count']) ? (int)$res['console_server_port_template_count'] : null;
+        $this->power_port_template_count = isset($res['power_port_template_count']) ? (int)$res['power_port_template_count'] : null;
+        $this->power_outlet_template_count = isset($res['power_outlet_template_count']) ? (int)$res['power_outlet_template_count'] : null;
+        $this->interface_template_count = isset($res['interface_template_count']) ? (int)$res['interface_template_count'] : null;
+        $this->front_port_template_count = isset($res['front_port_template_count']) ? (int)$res['front_port_template_count'] : null;
+        $this->rear_port_template_count = isset($res['rear_port_template_count']) ? (int)$res['rear_port_template_count'] : null;
+        $this->device_bay_template_count = isset($res['device_bay_template_count']) ? (int)$res['device_bay_template_count'] : null;
+        $this->module_bay_template_count = isset($res['module_bay_template_count']) ? (int)$res['module_bay_template_count'] : null;
+        $this->inventory_item_template_count = isset($res['inventory_item_template_count']) ? (int)$res['inventory_item_template_count'] : null;
         $this->front_image = $res['front_image'] ?? null;
         $this->rear_image = $res['rear_image'] ?? null;
     }
@@ -254,6 +277,9 @@ class DeviceType
     public function isFullDepth(): bool { return $this->is_full_depth; }
     public function setIsFullDepth(bool $is_full_depth): DeviceType { $this->is_full_depth = $is_full_depth; return $this; }
 
+    public function isExcludeFromUtilization(): bool { return $this->exclude_from_utilization; }
+    public function setExcludeFromUtilization(bool $exclude_from_utilization): DeviceType { $this->exclude_from_utilization = $exclude_from_utilization; return $this; }
+
     public function getSubdeviceRole(): ?string { return $this->subdevice_role; }
     public function setSubdeviceRole(?string $subdevice_role): DeviceType { $this->subdevice_role = $subdevice_role; return $this; }
 
@@ -287,6 +313,16 @@ class DeviceType
     public function getCreated(): ?string { return $this->created; }
     public function getLastUpdated(): ?string { return $this->last_updated; }
     public function getDeviceCount(): ?int { return $this->device_count; }
+    public function getConsolePortTemplateCount(): ?int { return $this->console_port_template_count; }
+    public function getConsoleServerPortTemplateCount(): ?int { return $this->console_server_port_template_count; }
+    public function getPowerPortTemplateCount(): ?int { return $this->power_port_template_count; }
+    public function getPowerOutletTemplateCount(): ?int { return $this->power_outlet_template_count; }
+    public function getInterfaceTemplateCount(): ?int { return $this->interface_template_count; }
+    public function getFrontPortTemplateCount(): ?int { return $this->front_port_template_count; }
+    public function getRearPortTemplateCount(): ?int { return $this->rear_port_template_count; }
+    public function getDeviceBayTemplateCount(): ?int { return $this->device_bay_template_count; }
+    public function getModuleBayTemplateCount(): ?int { return $this->module_bay_template_count; }
+    public function getInventoryItemTemplateCount(): ?int { return $this->inventory_item_template_count; }
     public function getFrontImage() { return $this->front_image; }
     public function getRearImage() { return $this->rear_image; }
 }

@@ -2,18 +2,17 @@
 
 namespace Ancalagon\Netbox;
 
-class DeviceRole
+class Platform
 {
-    private const string ENDPOINT = '/dcim/device-roles/';
+    private const string ENDPOINT = '/dcim/platforms/';
 
     // Writable fields
     private ?string $id = null;
-    private string $name = '';          // required
-    private string $slug = '';          // required
-    private string $color = '';
-    private bool $vm_role = true;
+    private string $name = '';              // required
+    private string $slug = '';              // required
+    private ?string $parent = null;         // FK to parent Platform
+    private ?string $manufacturer = null;   // FK
     private ?string $config_template = null; // FK
-    private ?string $parent = null;         // FK to parent DeviceRole
     private string $description = '';
     private ?string $owner = null;          // FK
     private string $comments = '';
@@ -44,10 +43,10 @@ class DeviceRole
     public function add(): void
     {
         if (empty($this->getName())) {
-            throw new Exception("Missing name for DeviceRole");
+            throw new Exception("Missing name for Platform");
         }
         if (empty($this->getSlug())) {
-            throw new Exception("Missing slug for DeviceRole");
+            throw new Exception("Missing slug for Platform");
         }
 
         $res = self::$client->post(self::ENDPOINT, $this->getAddParamArr());
@@ -74,16 +73,16 @@ class DeviceRole
         }
 
         if (empty($params)) {
-            throw new Exception("Can't load DeviceRole without 'id', 'name' or 'slug'");
+            throw new Exception("Can't load Platform without 'id', 'name', or 'slug'");
         }
 
         $res = self::$client->get(self::ENDPOINT, $params);
 
         if (($res['count'] ?? 0) === 0) {
-            throw new Exception("DeviceRole not found");
+            throw new Exception("Platform not found");
         }
         if (($res['count'] ?? 0) > 1) {
-            throw new Exception("Multiple DeviceRoles returned by query");
+            throw new Exception("Multiple Platforms returned by query");
         }
 
         $this->loadFromApiResult($res['results'][0]);
@@ -107,7 +106,7 @@ class DeviceRole
     public function edit(): void
     {
         if (is_null($this->getId())) {
-            throw new Exception("Can't edit DeviceRole without 'id'");
+            throw new Exception("Can't edit Platform without 'id'");
         }
 
         $res = self::$client->put(self::ENDPOINT . $this->getId() . '/', $this->getEditParamArr());
@@ -121,7 +120,7 @@ class DeviceRole
     public function update(): void
     {
         if (is_null($this->getId())) {
-            throw new Exception("Can't update DeviceRole without 'id'");
+            throw new Exception("Can't update Platform without 'id'");
         }
 
         $res = self::$client->patch(self::ENDPOINT . $this->getId() . '/', $this->getEditParamArr());
@@ -135,7 +134,7 @@ class DeviceRole
     public function delete(): void
     {
         if (is_null($this->getId())) {
-            throw new Exception("Can't delete DeviceRole without 'id'");
+            throw new Exception("Can't delete Platform without 'id'");
         }
 
         self::$client->delete(self::ENDPOINT . $this->getId() . '/');
@@ -149,12 +148,11 @@ class DeviceRole
         $params = [
             'name' => $this->getName(),
             'slug' => $this->getSlug(),
-            'vm_role' => $this->isVmRole(),
         ];
 
-        if (!empty($this->getColor())) { $params['color'] = $this->getColor(); }
-        if (!is_null($this->getConfigTemplate())) { $params['config_template'] = (int)$this->getConfigTemplate(); }
         if (!is_null($this->getParent())) { $params['parent'] = (int)$this->getParent(); }
+        if (!is_null($this->getManufacturer())) { $params['manufacturer'] = (int)$this->getManufacturer(); }
+        if (!is_null($this->getConfigTemplate())) { $params['config_template'] = (int)$this->getConfigTemplate(); }
         if (!empty($this->getDescription())) { $params['description'] = $this->getDescription(); }
         if (!is_null($this->getOwner())) { $params['owner'] = (int)$this->getOwner(); }
         if (!empty($this->getComments())) { $params['comments'] = $this->getComments(); }
@@ -174,10 +172,9 @@ class DeviceRole
         $this->setId(isset($res['id']) ? (string)$res['id'] : null);
         $this->setName((string)($res['name'] ?? $this->getName()));
         $this->setSlug((string)($res['slug'] ?? $this->getSlug()));
-        $this->setColor((string)($res['color'] ?? ''));
-        $this->setVmRole((bool)($res['vm_role'] ?? true));
-        $this->setConfigTemplate(self::extractId($res['config_template'] ?? null));
         $this->setParent(self::extractId($res['parent'] ?? null));
+        $this->setManufacturer(self::extractId($res['manufacturer'] ?? null));
+        $this->setConfigTemplate(self::extractId($res['config_template'] ?? null));
         $this->setDescription((string)($res['description'] ?? ''));
         $this->setOwner(self::extractId($res['owner'] ?? null));
         $this->setComments((string)($res['comments'] ?? ''));
@@ -205,40 +202,37 @@ class DeviceRole
     // --- Getters / Setters ---
 
     public function getId(): ?string { return $this->id; }
-    public function setId(?string $id): DeviceRole { $this->id = $id; return $this; }
+    public function setId(?string $id): Platform { $this->id = $id; return $this; }
 
     public function getName(): string { return $this->name; }
-    public function setName(string $name): DeviceRole { $this->name = $name; return $this; }
+    public function setName(string $name): Platform { $this->name = $name; return $this; }
 
     public function getSlug(): string { return $this->slug; }
-    public function setSlug(string $slug): DeviceRole { $this->slug = $slug; return $this; }
-
-    public function getColor(): string { return $this->color; }
-    public function setColor(string $color): DeviceRole { $this->color = $color; return $this; }
-
-    public function isVmRole(): bool { return $this->vm_role; }
-    public function setVmRole(bool $vm_role): DeviceRole { $this->vm_role = $vm_role; return $this; }
-
-    public function getConfigTemplate(): ?string { return $this->config_template; }
-    public function setConfigTemplate(?string $config_template): DeviceRole { $this->config_template = $config_template; return $this; }
+    public function setSlug(string $slug): Platform { $this->slug = $slug; return $this; }
 
     public function getParent(): ?string { return $this->parent; }
-    public function setParent(?string $parent): DeviceRole { $this->parent = $parent; return $this; }
+    public function setParent(?string $parent): Platform { $this->parent = $parent; return $this; }
+
+    public function getManufacturer(): ?string { return $this->manufacturer; }
+    public function setManufacturer(?string $manufacturer): Platform { $this->manufacturer = $manufacturer; return $this; }
+
+    public function getConfigTemplate(): ?string { return $this->config_template; }
+    public function setConfigTemplate(?string $config_template): Platform { $this->config_template = $config_template; return $this; }
 
     public function getDescription(): string { return $this->description; }
-    public function setDescription(string $description): DeviceRole { $this->description = $description; return $this; }
+    public function setDescription(string $description): Platform { $this->description = $description; return $this; }
 
     public function getOwner(): ?string { return $this->owner; }
-    public function setOwner(?string $owner): DeviceRole { $this->owner = $owner; return $this; }
+    public function setOwner(?string $owner): Platform { $this->owner = $owner; return $this; }
 
     public function getComments(): string { return $this->comments; }
-    public function setComments(string $comments): DeviceRole { $this->comments = $comments; return $this; }
+    public function setComments(string $comments): Platform { $this->comments = $comments; return $this; }
 
     public function getTags(): array { return $this->tags; }
-    public function setTags(array $tags): DeviceRole { $this->tags = $tags; return $this; }
+    public function setTags(array $tags): Platform { $this->tags = $tags; return $this; }
 
     public function getCustomFields(): array { return $this->custom_fields; }
-    public function setCustomFields(array $custom_fields): DeviceRole { $this->custom_fields = $custom_fields; return $this; }
+    public function setCustomFields(array $custom_fields): Platform { $this->custom_fields = $custom_fields; return $this; }
 
     public function getUrl(): ?string { return $this->url; }
     public function getDisplayUrl(): ?string { return $this->display_url; }
