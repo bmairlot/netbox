@@ -9,9 +9,9 @@ class NetboxClient
 
     public function __construct()
     {
-        $key = getenv('NETBOX_KEY');
-        $tokenValue = getenv('NETBOX_TOKEN');
-        $baseUrl = getenv('NETBOX_URL_PREFIX');
+        $key = $_ENV['NETBOX_KEY'] ?? false;
+        $tokenValue = $_ENV['NETBOX_TOKEN'] ?? false;
+        $baseUrl = $_ENV['NETBOX_URL_PREFIX'] ?? false;
 
         if ($key === false || $key === '') {
             throw new Exception('Environment variable NETBOX_KEY is not set');
