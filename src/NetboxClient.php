@@ -36,7 +36,6 @@ class NetboxClient
         if (!empty($queryParams)) {
             $url .= '?' . http_build_query($queryParams);
         }
-
         return $this->request('GET', $url);
     }
 
