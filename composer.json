@@ -27,6 +27,7 @@
     },
     "require-dev": {
         "ancalagon/netbox-podman": "^0.0.10",
-        "phpunit/phpunit": "^11.0"
+        "phpunit/phpunit": "^11.0",
+        "vlucas/phpdotenv": "*"
     }
 }
