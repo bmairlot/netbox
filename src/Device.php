@@ -34,7 +34,7 @@ class Device
     private string $description = '';
     private string $comments = '';
     private ?string $config_template = null;
-    private $local_context_data = null;
+    private mixed $local_context_data = null;
     private ?string $owner = null;
     private array $tags = [];
     private array $custom_fields = [];
@@ -374,8 +374,8 @@ class Device
     public function getConfigTemplate(): ?string { return $this->config_template; }
     public function setConfigTemplate(?string $config_template): Device { $this->config_template = $config_template; return $this; }
 
-    public function getLocalContextData() { return $this->local_context_data; }
-    public function setLocalContextData($local_context_data): Device { $this->local_context_data = $local_context_data; return $this; }
+    public function getLocalContextData(): mixed { return $this->local_context_data; }
+    public function setLocalContextData(mixed $local_context_data): Device { $this->local_context_data = $local_context_data; return $this; }
 
     public function getOwner(): ?string { return $this->owner; }
     public function setOwner(?string $owner): Device { $this->owner = $owner; return $this; }

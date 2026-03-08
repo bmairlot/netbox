@@ -26,7 +26,7 @@ class VirtualMachine
     private string $description = '';
     private string $comments = '';
     private ?string $config_template = null;
-    private ?string $local_context_data = null;
+    private mixed $local_context_data = null;
     private array $tags = [];
     private array $custom_fields = [];
 
@@ -197,7 +197,7 @@ class VirtualMachine
         $this->setDescription((string)($res['description'] ?? $this->getDescription()));
         $this->setComments((string)($res['comments'] ?? $this->getComments()));
         $this->setConfigTemplate(self::extractId($res['config_template'] ?? null));
-        $this->setLocalContextData(isset($res['local_context_data']) ? json_encode($res['local_context_data']) : $this->getLocalContextData());
+        $this->setLocalContextData($res['local_context_data'] ?? $this->getLocalContextData());
         $this->setTags($res['tags'] ?? $this->getTags());
         $this->setCustomFields($res['custom_fields'] ?? $this->getCustomFields());
 
@@ -272,8 +272,8 @@ class VirtualMachine
     public function getConfigTemplate(): ?string { return $this->config_template; }
     public function setConfigTemplate(?string $config_template): VirtualMachine { $this->config_template = $config_template; return $this; }
 
-    public function getLocalContextData(): ?string { return $this->local_context_data; }
-    public function setLocalContextData(?string $local_context_data): VirtualMachine { $this->local_context_data = $local_context_data; return $this; }
+    public function getLocalContextData(): mixed { return $this->local_context_data; }
+    public function setLocalContextData(mixed $local_context_data): VirtualMachine { $this->local_context_data = $local_context_data; return $this; }
 
     public function getTags(): array { return $this->tags; }
     public function setTags(array $tags): VirtualMachine { $this->tags = $tags; return $this; }
